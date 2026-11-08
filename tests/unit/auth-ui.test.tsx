@@ -110,6 +110,35 @@ describe("authentication state", () => {
     });
     await waitFor(() => expect(screen.getByText("owner")).toBeInTheDocument());
   });
+  it("keeps the authenticated screen mounted while the same user's token refreshes", async () => {
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+    await act(async () => {
+      mocks.authListener!(fakeUser());
+    });
+    expect(screen.getByText("owner")).toBeInTheDocument();
+    const refreshed = fakeUser();
+    let finish: (value: unknown) => void = () => {};
+    vi.mocked(refreshed.getIdTokenResult).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve as (value: unknown) => void;
+        }),
+    );
+    await act(async () => {
+      mocks.authListener!(refreshed);
+    });
+    expect(screen.getByText("owner")).toBeInTheDocument();
+    await act(async () => {
+      finish({
+        signInProvider: "google.com",
+        claims: { email: "teacher@example.com", email_verified: true },
+      });
+    });
+  });
   it("checks an invitation for other UIDs and reacts to revocation", async () => {
     render(
       <AuthProvider>

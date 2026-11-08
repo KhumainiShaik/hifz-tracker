@@ -107,6 +107,24 @@ test("owner journey, persistence, backup, invitation and read-only revocation", 
     page.getByRole("heading", { name: "Assalamu alaikum, Abdul." }),
   ).toBeVisible();
   await expect(page.getByText("7 of 6,236 ayahs")).toBeVisible();
+  // Exercise actual SDK offline queuing: no server-confirmed success before reconnect.
+  await page
+    .getByRole("button", { name: "Add memorization", exact: true })
+    .first()
+    .click();
+  await page.getByLabel("Surah", { exact: true }).selectOption("112");
+  await page.getByLabel("Ending ayah").fill("4");
+  await page.context().setOffline(true);
+  await page.getByRole("button", { name: "Save session", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Waiting for sync…" }),
+  ).toBeVisible();
+  await expect(page.getByText("Memorization synchronized.")).toHaveCount(0);
+  await page.context().setOffline(false);
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await page.reload();
+  await expect(page.getByText("11 of 6,236 ayahs")).toBeVisible();
+
   await page.getByRole("button", { name: "Log revision", exact: true }).click();
   await page
     .getByLabel("Review a memorized range")
@@ -199,7 +217,7 @@ test("uninvited account sees no progress even with the invitation URL", async ({
     page.getByText("This Google account does not have an active invitation."),
   ).toBeVisible();
 });
-test("mobile form validates ranges and revision edits are persistent", async ({
+test("range validation, edits and confirmed deletion persist", async ({
   page,
 }) => {
   const env = await initializeTestEnvironment({

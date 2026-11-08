@@ -22,7 +22,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const current = ++generation;
         stopInvite?.();
         stopInvite = undefined;
-        setState({ user, role: user ? "loading" : "signed-out", error: "" });
+        // A routine token refresh must not unmount forms or resubscribe the whole history.
+        setState((previous) =>
+          user && previous.user?.uid === user.uid
+            ? { ...previous, user, error: "" }
+            : { user, role: user ? "loading" : "signed-out", error: "" },
+        );
         if (!user) return;
         try {
           const token = await user.getIdTokenResult();

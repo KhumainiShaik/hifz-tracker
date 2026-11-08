@@ -34,9 +34,16 @@ export const auth = firebaseApp ? getAuth(firebaseApp) : null;
 if (auth && emulator)
   connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
 let db: Firestore | null = null;
+let persistentOwnerCache = false;
 export function database(owner = false): Firestore {
   if (!firebaseApp) throw new Error("Firebase has not been configured.");
+  if (db && persistentOwnerCache !== owner) {
+    throw new Error(
+      "The signed-in account changed. Sign out and sign in again to start a fresh data session.",
+    );
+  }
   if (!db) {
+    persistentOwnerCache = owner;
     db = initializeFirestore(firebaseApp, {
       localCache: owner
         ? persistentLocalCache({ tabManager: persistentMultipleTabManager() })
