@@ -1,0 +1,2 @@
+# Preserve the upstream Tanzil artifact byte for byte, including its line endings.
+src/data/quran-data.xml -text whitespace=cr-at-eol

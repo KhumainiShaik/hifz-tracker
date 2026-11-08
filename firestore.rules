@@ -1,0 +1,122 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Generated production rules replace this sentinel with the verified Firebase UID.
+    // Client configuration alone never grants ownership. Keep this template locked.
+    function ownerUid() { return '__OWNER_UID_NOT_CONFIGURED__'; }
+    function configured() { return ownerUid() != '__OWNER_UID_NOT_CONFIGURED__'; }
+    function google() {
+      return request.auth != null && request.auth.token.firebase.sign_in_provider == 'google.com'
+        && request.auth.token.email_verified == true && request.auth.token.email is string;
+    }
+    function owner(uid) { return configured() && uid == ownerUid() && google() && request.auth.uid == ownerUid(); }
+    function selfEmail(email) { return google() && request.auth.token.email.lower() == email; }
+    function invited(uid) {
+      return configured() && uid == ownerUid() && google()
+        && get(/databases/$(database)/documents/owners/$(uid)/viewerInvitations/$(request.auth.token.email.lower())).data.status == 'active';
+    }
+    function progressReader(uid) { return owner(uid) || invited(uid); }
+    function base(d) {
+      return d.schemaVersion == 1 && d.createdAt is timestamp && d.updatedAt is timestamp
+        && d.createdAt <= request.time && d.updatedAt == request.time;
+    }
+    function immutableCreation(d) { return resource == null || d.createdAt == resource.data.createdAt; }
+    function date(d) { return d is string && d.matches('^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'); }
+    function optionalDate(d) { return d == '' || date(d); }
+    function recordId(id) { return id is string && id.matches('^[a-zA-Z0-9_-]{1,128}$'); }
+    function quality(q) { return q in ['strong', 'okay', 'needs-practice']; }
+    function ayahCounts() { return [7, 286, 200, 176, 120, 165, 206, 75, 129, 109, 123, 111, 43, 52, 99, 128, 111, 110, 98, 135, 112, 78, 118, 64, 77, 227, 93, 88, 69, 60, 34, 30, 73, 54, 45, 83, 182, 88, 75, 85, 54, 53, 89, 59, 37, 35, 38, 29, 18, 45, 60, 49, 62, 55, 78, 96, 29, 22, 24, 13, 14, 11, 11, 18, 12, 12, 30, 52, 52, 44, 28, 28, 20, 56, 40, 31, 50, 40, 46, 42, 29, 19, 36, 25, 22, 17, 19, 26, 30, 20, 15, 21, 11, 8, 8, 19, 5, 8, 8, 11, 11, 8, 3, 9, 5, 4, 7, 3, 6, 3, 5, 4, 5, 6]; }
+    function range(d) {
+      return d.surah is int && d.surah >= 1 && d.surah <= 114 && d.start is int && d.end is int
+        && d.start >= 1 && d.start <= d.end && d.end <= ayahCounts()[d.surah - 1];
+    }
+    function memory(d) {
+      return d.keys().hasAll(['schemaVersion','createdAt','updatedAt','surah','start','end','date','confidence'])
+        && d.keys().hasOnly(['schemaVersion','createdAt','updatedAt','surah','start','end','date','confidence'])
+        && base(d) && range(d) && date(d.date) && quality(d.confidence);
+    }
+    function revision(d) {
+      return d.keys().hasAll(['schemaVersion','createdAt','updatedAt','surah','start','end','date','category','quality','memoryId','nextReview'])
+        && d.keys().hasOnly(['schemaVersion','createdAt','updatedAt','surah','start','end','date','category','quality','memoryId','nextReview'])
+        && base(d) && range(d) && date(d.date) && quality(d.quality) && d.category in ['sabaq','sabqi','manzil']
+        && (d.memoryId == '' || recordId(d.memoryId)) && optionalDate(d.nextReview) && (d.nextReview == '' || d.nextReview > d.date);
+    }
+    function intervalAt(v,i) { return v.size() <= i || (v[i] is int && v[i] >= 1 && v[i] <= 365 && (i == 0 || v[i] > v[i-1])); }
+    function intervals(v) {
+      return v is list && v.size() >= 1 && v.size() <= 10
+        && intervalAt(v,0) && intervalAt(v,1) && intervalAt(v,2) && intervalAt(v,3) && intervalAt(v,4)
+        && intervalAt(v,5) && intervalAt(v,6) && intervalAt(v,7) && intervalAt(v,8) && intervalAt(v,9);
+    }
+    function goals(d) {
+      return d.dailyGoal is int && d.dailyGoal >= 1 && d.dailyGoal <= 1000
+        && d.revisionGoal is int && d.revisionGoal >= 1 && d.revisionGoal <= 100
+        && d.timeZone is string && d.timeZone.size() > 0 && d.timeZone.size() <= 100 && intervals(d.intervals);
+    }
+    match /owners/{uid} {
+      allow read, write: if false;
+      match /memorizedRanges/{id} {
+        allow read: if progressReader(uid);
+        allow create, update: if owner(uid) && recordId(id) && memory(request.resource.data) && immutableCreation(request.resource.data)
+          && getAfter(/databases/$(database)/documents/owners/$(uid)/memorizationSessions/$(id)).data == request.resource.data;
+        allow delete: if owner(uid) && !existsAfter(/databases/$(database)/documents/owners/$(uid)/memorizationSessions/$(id));
+      }
+      match /memorizationSessions/{id} {
+        allow read: if progressReader(uid);
+        allow create, update: if owner(uid) && recordId(id) && memory(request.resource.data) && immutableCreation(request.resource.data)
+          && getAfter(/databases/$(database)/documents/owners/$(uid)/memorizedRanges/$(id)).data == request.resource.data;
+        allow delete: if owner(uid) && !existsAfter(/databases/$(database)/documents/owners/$(uid)/memorizedRanges/$(id));
+      }
+      match /revisionSessions/{id} {
+        allow read: if progressReader(uid);
+        allow create, update: if owner(uid) && recordId(id) && revision(request.resource.data) && immutableCreation(request.resource.data);
+        allow delete: if owner(uid);
+      }
+      match /revisionSchedules/{id} {
+        allow read: if progressReader(uid);
+        allow create, update: if owner(uid) && recordId(id) && base(request.resource.data) && immutableCreation(request.resource.data)
+          && request.resource.data.keys().hasAll(['schemaVersion','createdAt','updatedAt','memoryId','paused','overrideDate'])
+          && request.resource.data.keys().hasOnly(['schemaVersion','createdAt','updatedAt','memoryId','paused','overrideDate'])
+          && request.resource.data.memoryId == id && request.resource.data.paused is bool && optionalDate(request.resource.data.overrideDate)
+          && existsAfter(/databases/$(database)/documents/owners/$(uid)/memorizedRanges/$(id));
+        allow delete: if owner(uid);
+      }
+      match /profile/{id} {
+        allow get: if progressReader(uid) && id == 'public';
+        allow list: if owner(uid);
+        allow create, update: if owner(uid) && id == 'public' && base(request.resource.data) && goals(request.resource.data)
+          && request.resource.data.displayName == 'Abdul Khumaini Shaik'
+          && request.resource.data.keys().hasAll(['schemaVersion','createdAt','updatedAt','displayName','timeZone','dailyGoal','revisionGoal','intervals'])
+          && request.resource.data.keys().hasOnly(['schemaVersion','createdAt','updatedAt','displayName','timeZone','dailyGoal','revisionGoal','intervals']);
+        allow delete: if owner(uid);
+      }
+      match /settings/{id} {
+        allow read: if owner(uid);
+        allow create, update: if owner(uid) && id == 'preferences' && base(request.resource.data) && goals(request.resource.data)
+          && request.resource.data.keys().hasAll(['schemaVersion','createdAt','updatedAt','dailyGoal','revisionGoal','timeZone','intervals','unit','mushaf','theme'])
+          && request.resource.data.keys().hasOnly(['schemaVersion','createdAt','updatedAt','dailyGoal','revisionGoal','timeZone','intervals','unit','mushaf','theme'])
+          && request.resource.data.unit in ['ayahs','juz'] && request.resource.data.mushaf in ['medina-604','none'] && request.resource.data.theme in ['light','dark','system'];
+        allow delete: if owner(uid);
+      }
+      match /privateNotes/{id} {
+        allow read: if owner(uid);
+        allow create, update: if owner(uid) && recordId(id) && base(request.resource.data)
+          && request.resource.data.keys().hasAll(['schemaVersion','createdAt','updatedAt','text'])
+          && request.resource.data.keys().hasOnly(['schemaVersion','createdAt','updatedAt','text'])
+          && request.resource.data.text is string && request.resource.data.text.size() <= 4000;
+        allow delete: if owner(uid);
+      }
+      match /viewerInvitations/{email} {
+        // The only viewer invitation query is a direct get/listen on their own email.
+        allow get: if owner(uid) || (configured() && uid == ownerUid() && selfEmail(email));
+        allow list: if owner(uid);
+        allow create, update: if owner(uid) && base(request.resource.data) && immutableCreation(request.resource.data)
+          && request.resource.data.keys().hasAll(['schemaVersion','createdAt','updatedAt','email','status'])
+          && request.resource.data.keys().hasOnly(['schemaVersion','createdAt','updatedAt','email','status'])
+          && email.size() <= 254 && email.matches('^[a-z0-9.!#$%&\'*+?^_`{|}~-]+@[a-z0-9][a-z0-9.-]*\\.[a-z]{2,}$')
+          && request.resource.data.email == email && email == email.lower() && request.resource.data.status in ['active','revoked'];
+        allow delete: if owner(uid);
+      }
+    }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

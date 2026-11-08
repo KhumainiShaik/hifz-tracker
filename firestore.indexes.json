@@ -1,0 +1,6 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    { "collectionGroup": "privateNotes", "fieldPath": "text", "indexes": [] }
+  ]
+}
