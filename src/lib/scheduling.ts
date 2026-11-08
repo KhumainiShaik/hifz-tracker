@@ -50,6 +50,20 @@ export function nextReview(
     quality: related.at(-1)?.quality ?? memory.confidence,
   };
 }
+const rangeKey = (m: Memory) => `${m.surah}_${m.start}_${m.end}`;
+/** Re-recording an identical range restarts one effective schedule, never a second queue entry. */
+export function scheduleAnchors(memories: Memory[]): Memory[] {
+  const groups = new Map<string, Memory>();
+  const newest = [...memories].sort(
+    (a, b) =>
+      b.date.localeCompare(a.date) ||
+      b.createdAt - a.createdAt ||
+      b.id.localeCompare(a.id),
+  );
+  for (const m of newest)
+    if (!groups.has(rangeKey(m))) groups.set(rangeKey(m), m);
+  return [...groups.values()];
+}
 export function revisionQueue(
   memories: Memory[],
   revisions: Revision[],
@@ -57,16 +71,24 @@ export function revisionQueue(
   intervals: number[],
   today: string,
 ) {
-  return memories
-    .map((m) =>
-      nextReview(
+  return scheduleAnchors(memories)
+    .map((m) => {
+      const linkedIds = new Set(
+        memories
+          .filter((other) => rangeKey(other) === rangeKey(m))
+          .map((other) => other.id),
+      );
+      const history = revisions.map((r) =>
+        linkedIds.has(r.memoryId) ? { ...r, memoryId: m.id } : r,
+      );
+      return nextReview(
         m,
-        revisions,
+        history,
         intervals,
         today,
         schedules.find((s) => s.memoryId === m.id),
-      ),
-    )
+      );
+    })
     .filter((r) => r !== null)
     .sort(
       (a, b) =>

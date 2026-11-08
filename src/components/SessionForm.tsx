@@ -1,3 +1,4 @@
+import { categoryForAge } from "../lib/analytics";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { BookOpen, ShieldCheck } from "lucide-react";
@@ -40,7 +41,11 @@ export function SessionForm({
           : "okay",
     );
   const [category, setCategory] = useState<"sabaq" | "sabqi" | "manzil">(
-    record && "category" in record ? record.category : "sabqi",
+    record && "category" in record
+      ? record.category
+      : memory
+        ? categoryForAge(memory.date, today)
+        : "sabqi",
   );
   const [memoryId, setMemoryId] = useState(
     record && "memoryId" in record ? record.memoryId : (memory?.id ?? ""),
@@ -138,6 +143,7 @@ export function SessionForm({
     setMemoryId(id);
     const m = data.memorizedRanges.find((m) => m.id === id);
     if (m) {
+      setCategory(categoryForAge(m.date, today));
       setSurah(m.surah);
       setStart(m.start);
       setEnd(m.end);

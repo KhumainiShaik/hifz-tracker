@@ -1,6 +1,6 @@
 import { sessionKey } from "./models";
 import type { Memory, Revision } from "./models";
-import { uniqueAyahs, TOTAL_AYAHS, juzProgress } from "./quran";
+import { uniqueAyahs, TOTAL_AYAHS, juzProgress, SURAHS } from "./quran";
 import { addDays, dateInZone, dayDistance } from "./dates";
 export function streaks(dates: string[], today: string) {
   const days = [...new Set(dates)].filter((d) => d <= today).sort();
@@ -52,7 +52,10 @@ export function analytics(
     percent: (unique / TOTAL_AYAHS) * 100,
     juz,
     completeJuz: juz.filter((j) => j.memorized === j.total).length,
-    completeSurahs: new Set(memories.map((m) => m.surah)).size,
+    completeSurahs: SURAHS.filter(
+      (s) =>
+        uniqueAyahs(memories.filter((m) => m.surah === s.number)) === s.ayahs,
+    ).length,
     streak: streaks(
       all.map((a) => a.date),
       today,

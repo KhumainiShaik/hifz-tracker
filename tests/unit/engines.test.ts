@@ -268,3 +268,48 @@ describe("preferences and invitations", () => {
     expect(() => normalizeEmail("bad")).toThrow();
   });
 });
+
+describe("repeated-range scheduling and complete coverage", () => {
+  it("coalesces repeated ranges and carries linked review history to the latest anchor", () => {
+    const first = memory(),
+      latest = memory({ id: "m2", date: "2026-01-05" });
+    const queue = revisionQueue(
+      [first, latest],
+      [revision({ date: "2026-01-06" })],
+      [],
+      [1, 3, 7],
+      "2026-01-07",
+    );
+    expect(queue).toHaveLength(1);
+    expect(queue[0].memory.id).toBe("m2");
+    expect(queue[0].due).toBe("2026-01-09");
+    expect(
+      revisionQueue(
+        [first, latest],
+        [],
+        [
+          {
+            ...baseRecord("m2"),
+            memoryId: "m2",
+            paused: true,
+            overrideDate: "",
+          },
+        ],
+        [1, 3],
+        "2026-01-07",
+      ),
+    ).toHaveLength(0);
+  });
+  it("counts a Surah complete only when all of its ayahs are covered", () => {
+    expect(
+      analytics([memory({ end: 4 })], [], "2026-01-02").completeSurahs,
+    ).toBe(0);
+    expect(
+      analytics(
+        [memory({ end: 4 }), memory({ id: "m2", start: 3, end: 7 })],
+        [],
+        "2026-01-02",
+      ).completeSurahs,
+    ).toBe(1);
+  });
+});

@@ -10,7 +10,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { useAuth, useData, useMutation, useToday } from "../lib/hooks";
-import { revisionQueue } from "../lib/scheduling";
+import { revisionQueue, scheduleAnchors } from "../lib/scheduling";
 import { rangeLabel } from "../lib/quran";
 import { baseRecord } from "../lib/models";
 import type {
@@ -42,6 +42,9 @@ export function Revision() {
     [remove, setRemove] = useState<RevisionRecord | null>(null),
     [adjust, setAdjust] = useState<Schedule | null>(null);
   const { busy, run } = useMutation();
+  const activeIds = new Set(
+    scheduleAnchors(data.memorizedRanges).map((m) => m.id),
+  );
   const queue = revisionQueue(
     data.memorizedRanges,
     data.revisionSessions,
@@ -244,7 +247,7 @@ export function Revision() {
             )}
             {tab === "all" &&
               data.revisionSchedules
-                .filter((s) => s.paused)
+                .filter((s) => s.paused && activeIds.has(s.memoryId))
                 .map((s) => {
                   const m = data.memorizedRanges.find(
                     (m) => m.id === s.memoryId,

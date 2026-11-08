@@ -56,7 +56,7 @@ Streaks use explicit session calendar dates interpreted in the selected IANA zon
 
 ## Revision scheduling
 
-Each memorized range has exactly one schedule-control document with its same ID. Automatic next dates are derived by replaying saved revisions, not maintained by render-time writes. This avoids duplicated queue jobs, race-prone materialized schedules, and paid background services.
+Each memorization record has one schedule-control document with its same ID. Repeated records for the exact same Surah/ayah range produce only one effective queue entry: the most recently dated memorization supplies the anchor and control (creation time and ID break ties). Reviews linked to any of those repeated records are replayed from that anchor date. A re-recorded range therefore restarts its rhythm without duplicate scheduling. Distinct partially overlapping ranges remain separate study units; coverage analytics still union all overlap. Automatic next dates are derived by replaying saved revisions, not maintained by render-time writes. This avoids duplicated queue jobs, race-prone materialized schedules, and paid background services.
 
 Default gaps are `[1,3,7,14,30]` days. These are configurable study preferences, not religious prescriptions. The first review is memory date + first gap. Qualifying revisions are linked to that memory ID and cover the entire current range; partial or custom revisions count as activity only. Revisions are sorted by date, creation time, and ID; duplicate natural signatures are ignored.
 
