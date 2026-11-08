@@ -20,7 +20,7 @@
   --line: #e6eae3;
   --emerald: #205743;
   --soft: #edf4ed;
-  --gold: #a2833f;
+  --gold: #8b6f35;
   --gold-soft: #f8f2e5;
   --shadow: 0 5px 22px #213c2d04;
   color-scheme: light;
@@ -177,7 +177,7 @@ small {
 .button.small {
   padding: 9px 12px;
   font-size: 0.75rem;
-  min-height: 40px;
+  min-height: 44px;
 }
 .icon-button {
   border: 0;
@@ -1090,7 +1090,7 @@ textarea::placeholder {
   border: 0;
   background: transparent;
   font-size: 0.72rem;
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px 14px;
   border-radius: 7px;
   color: var(--muted);

@@ -562,14 +562,7 @@ describe("safe unconfigured onboarding", () => {
           claims("abdul@example.com"),
         )
         .firestore() as unknown as Firestore;
-      await assertFails(
-        getDocFromServer(
-          doc(
-            sentinel,
-            "owners/__OWNER_UID_NOT_CONFIGURED__/memorizedRanges/m1",
-          ),
-        ),
-      );
+      await assertFails(getDocFromServer(ref(sentinel)));
     } finally {
       await locked.cleanup();
     }

@@ -69,10 +69,16 @@ function put(
   isNew: boolean,
   restore = false,
 ) {
-  batch.set(
-    doc(db, ownerPath(uid), col, record.id),
-    stored(record, isNew, restore),
-  );
+  const ref = doc(db, ownerPath(uid), col, record.id);
+  const value = stored(record, isNew, restore);
+  if (!isNew && !restore) {
+    // Preserve Firestore's original nanoseconds; a millisecond round trip can lose precision.
+    const { createdAt, ...updates } = value;
+    void createdAt;
+    batch.update(ref, updates);
+  } else {
+    batch.set(ref, value);
+  }
 }
 export async function saveMemory(
   db: Firestore,

@@ -28,9 +28,19 @@ jobs:
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
       - run: npm run test:rules
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-diagnostics
+          path: test-results/
+          if-no-files-found: ignore
       - name: Build for GitHub Pages
         run: npm run build
         env:
