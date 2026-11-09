@@ -890,7 +890,7 @@ small {
   margin-bottom: 19px;
   min-width: 0;
 }
-.field > span {
+.field > label {
   font-size: 0.76rem;
   font-weight: 600;
 }
@@ -2339,7 +2339,7 @@ body:has(dialog[open]) {
   textarea {
     font-size: 16px;
   }
-  .field > span {
+  .field > label {
     font-size: 0.74rem;
   }
   .field > small {

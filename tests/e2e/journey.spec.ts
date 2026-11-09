@@ -5,12 +5,19 @@ import { readFileSync } from "node:fs";
 import { doc, setDoc, Timestamp } from "firebase/firestore";
 const project = "demo-hifz-tracker";
 async function login(page: Page, email: string) {
-  await page.goto("./");
+  await page.goto("http://127.0.0.1:5174/hifz-tracker/");
   const popupPromise = page.waitForEvent("popup");
   await page.getByRole("button", { name: "Continue with Google" }).click();
   const popup = await popupPromise;
+  // The emulator renders account rows before its blocking external script attaches
+  // their click handlers. Visibility alone is insufficient for this test-only UI.
+  await popup.waitForLoadState("load");
+  const closed = popup.waitForEvent("close");
   await popup.getByText(email, { exact: false }).click();
-  await expect(page.getByRole("heading", { level: 1 }).first()).toBeVisible();
+  await closed;
+  await expect(
+    page.getByRole("button", { name: "Opening Google…" }),
+  ).toHaveCount(0);
 }
 test.beforeEach(async () => {
   const env = await initializeTestEnvironment({
@@ -26,9 +33,14 @@ test.beforeEach(async () => {
   });
   await env.clearFirestore();
   const baseUrl = `http://127.0.0.1:9099`;
-  await fetch(`${baseUrl}/emulator/v1/projects/${project}/accounts`, {
-    method: "DELETE",
-  });
+  const reset = await fetch(
+    `${baseUrl}/emulator/v1/projects/${project}/accounts`,
+    {
+      method: "DELETE",
+    },
+  );
+  if (!reset.ok)
+    throw new Error(`Auth emulator reset failed: ${await reset.text()}`);
   const users = [
     {
       localId: "test-owner",
@@ -70,6 +82,11 @@ test.beforeEach(async () => {
   );
   if (!response.ok)
     throw new Error(`Auth emulator seed failed: ${await response.text()}`);
+  const result = await response.json();
+  if (result.errors?.length)
+    throw new Error(
+      `Auth emulator seed rejected users: ${JSON.stringify(result.errors)}`,
+    );
   await env.cleanup();
 });
 test("owner journey, persistence, backup, invitation and read-only revocation", async ({
@@ -175,11 +192,7 @@ test("owner journey, persistence, backup, invitation and read-only revocation", 
     viewport: { width: 390, height: 844 },
   });
   const viewer = await viewerContext.newPage();
-  await viewer.goto("http://127.0.0.1:5174/hifz-tracker/");
-  const popupPromise = viewer.waitForEvent("popup");
-  await viewer.getByRole("button", { name: "Continue with Google" }).click();
-  const popup = await popupPromise;
-  await popup.getByText("teacher@example.com", { exact: false }).click();
+  await login(viewer, "teacher@example.com");
   await expect(
     viewer.getByRole("heading", { name: "A window into Abdul’s journey." }),
   ).toBeVisible();

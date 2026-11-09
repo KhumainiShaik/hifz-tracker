@@ -1,4 +1,11 @@
-import { useEffect, useId, useRef } from "react";
+import {
+  Children,
+  cloneElement,
+  isValidElement,
+  useEffect,
+  useId,
+  useRef,
+} from "react";
 import type { ReactNode } from "react";
 import { BookOpen, X, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -194,11 +201,28 @@ export function Field({
   children: ReactNode;
   hint?: string;
 }) {
+  const id = useId();
+  const hintId = `${id}-hint`;
   return (
-    <label className="field">
-      <span>{label}</span>
-      {children}
-      {hint && <small>{hint}</small>}
-    </label>
+    <div className="field">
+      <label htmlFor={id}>{label}</label>
+      {Children.map(children, (child) => {
+        if (
+          isValidElement<{ id?: string; "aria-describedby"?: string }>(child) &&
+          typeof child.type === "string" &&
+          ["input", "select", "textarea"].includes(child.type)
+        ) {
+          return cloneElement(child, {
+            id,
+            "aria-describedby":
+              [child.props["aria-describedby"], hint ? hintId : undefined]
+                .filter(Boolean)
+                .join(" ") || undefined,
+          });
+        }
+        return child;
+      })}
+      {hint && <small id={hintId}>{hint}</small>}
+    </div>
   );
 }
