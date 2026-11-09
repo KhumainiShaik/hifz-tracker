@@ -158,7 +158,7 @@ export function Welcome() {
               <>
                 <p>{error}</p>
                 <p>
-                  Ask Abdul to invite the exact address{" "}
+                  Ask Abdul Khumaini to invite the exact address{" "}
                   <strong>{user?.email}</strong>. The shared link alone does not
                   grant access.
                 </p>
@@ -176,7 +176,7 @@ export function Welcome() {
             ) : (
               <>
                 <p>
-                  Sign in to continue your Hifz journey, or follow Abdul’s
+                  Sign in to continue your Hifz journey, or follow Abdul Khumaini’s
                   progress with an invited Google account.
                 </p>
                 {error && (
@@ -196,7 +196,7 @@ export function Welcome() {
                   <ArrowRight size={18} />
                 </button>
                 <p className="sign-in-note">
-                  Your account stays private. Only Abdul can make changes;
+                  Your account stays private. Only Abdul Khumaini can make changes;
                   invited family and teachers can follow along.
                 </p>
               </>

@@ -16,7 +16,7 @@ export function Logo() {
         <BookOpen size={23} strokeWidth={1.6} />
       </span>
       <span>
-        Abdul’s <strong>Hifz Journey</strong>
+        Abdul Khumaini’s <strong>Hifz Journey</strong>
         <small>A LITTLE, EVERY DAY</small>
       </span>
     </div>

@@ -97,7 +97,7 @@ test("owner journey, persistence, backup, invitation and read-only revocation", 
   page.on("pageerror", (e) => errors.push(e.message));
   await login(page, "abdul@example.com");
   await expect(
-    page.getByRole("heading", { name: "Assalamu alaikum, Abdul." }),
+    page.getByRole("heading", { name: "Assalamu alaikum, Abdul Khumaini." }),
   ).toBeVisible();
   await expect(page.getByText("Your story starts here")).toBeVisible();
   await page.screenshot({
@@ -121,7 +121,7 @@ test("owner journey, persistence, backup, invitation and read-only revocation", 
   await expect(page.getByText("Memorization synchronized.")).toBeVisible();
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "Assalamu alaikum, Abdul." }),
+    page.getByRole("heading", { name: "Assalamu alaikum, Abdul Khumaini." }),
   ).toBeVisible();
   await expect(page.getByText("7 of 6,236 ayahs")).toBeVisible();
   // Exercise actual SDK offline queuing: no server-confirmed success before reconnect.
@@ -194,7 +194,7 @@ test("owner journey, persistence, backup, invitation and read-only revocation", 
   const viewer = await viewerContext.newPage();
   await login(viewer, "teacher@example.com");
   await expect(
-    viewer.getByRole("heading", { name: "A window into Abdul’s journey." }),
+    viewer.getByRole("heading", { name: "A window into Abdul Khumaini’s journey." }),
   ).toBeVisible();
   await expect(
     viewer.getByRole("button", { name: /add memorization|log revision/i }),
@@ -207,7 +207,7 @@ test("owner journey, persistence, backup, invitation and read-only revocation", 
   ).toHaveCount(0);
   await viewer.goto("http://127.0.0.1:5174/hifz-tracker/#/settings");
   await expect(
-    viewer.getByRole("heading", { name: "A window into Abdul’s journey." }),
+    viewer.getByRole("heading", { name: "A window into Abdul Khumaini’s journey." }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Revoke", exact: true }).click();
   await page.getByRole("button", { name: "Confirm", exact: true }).click();

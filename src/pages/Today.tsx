@@ -48,8 +48,8 @@ export function Today() {
         }
         title={
           role === "owner"
-            ? "Assalamu alaikum, Abdul."
-            : "A window into Abdul’s journey."
+            ? "Assalamu alaikum, Abdul Khumaini."
+            : "A window into Abdul Khumaini’s journey."
         }
         description={`${prettyDate(today)}${hijri ? ` · ${hijri}` : ""}`}
         action={
