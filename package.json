@@ -48,7 +48,7 @@
     "firebase-tools": "^15.35.0",
     "globals": "^17.14.0",
     "jsdom": "^29.1.1",
-    "prettier": "^3.6.2",
+    "prettier": "^3.9.10",
     "sharp": "^0.35.5",
     "tailwindcss": "^4.3.5",
     "typescript": "^6.0.3",
