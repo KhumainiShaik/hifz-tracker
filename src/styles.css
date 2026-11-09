@@ -1531,6 +1531,9 @@ dialog::backdrop {
 .skip-link:focus {
   top: 15px;
 }
+.skip-link:not(:focus) {
+  clip-path: inset(50%);
+}
 .welcome {
   max-width: 1440px;
   margin: auto;

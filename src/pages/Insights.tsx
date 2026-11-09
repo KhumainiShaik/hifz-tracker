@@ -44,8 +44,8 @@ export function Insights() {
           },
           {
             label: "Longest streak",
-            value: `${a.streak.longest} days`,
-            note: `${a.streak.current} days in your current streak`,
+            value: `${a.streak.longest} ${a.streak.longest === 1 ? "day" : "days"}`,
+            note: `${a.streak.current} ${a.streak.current === 1 ? "day" : "days"} in your current streak`,
             icon: Flame,
           },
           {

@@ -259,6 +259,9 @@ test("range validation, edits and confirmed deletion persist", async ({
   });
   await env.cleanup();
   await login(page, "abdul@example.com");
+  await page.getByRole("link", { name: "Skip to content" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("main")).toBeFocused();
   await page.goto("./#/hifz");
   await page.getByRole("button", { name: /Al-Faatiha/ }).click();
   await page
